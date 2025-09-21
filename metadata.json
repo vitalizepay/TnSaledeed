@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Vitalize Ventures Tamil Sale Deed Drafting Assistant",
+  "description": "An intelligent assistant to draft Tamil sale deeds. Upload a sample deed, seller's Aadhaar, buyer's Aadhaar, and seller's prior deed to generate a new, updated document draft by leveraging AI to extract and replace relevant information.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

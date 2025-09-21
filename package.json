@@ -1,0 +1,28 @@
+{
+  "name": "copy-of-vitalize-ventures-tamil-sale-deed-drafting-assistant",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@google/genai": "^1.17.0",
+    "@supabase/supabase-js": "^2.57.2",
+    "docx": "^9.5.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.13",
+    "@types/node": "^22.14.0",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.13",
+    "tailwindcss-cli": "^0.1.2",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
+}

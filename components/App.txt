@@ -1,0 +1,401 @@
+import React, { useState, useCallback, useContext, useRef } from 'react';
+import { FileUpload } from './components/FileUpload';
+import { ResultDisplay } from './components/ResultDisplay';
+import { Loader } from './components/Loader';
+import { Auth } from './components/Auth';
+import { DocumentIcon, LogoutIcon, UploadIcon, SparklesIcon, CheckIcon, LightBulbIcon, FileIcon, TrashIcon } from './components/icons';
+import type { UploadedFiles, FileKey } from './types';
+import { generateSaleDeed, isGeminiConfigured } from './services/geminiService';
+import { UserContext } from './contexts/UserContext';
+import { isSupabaseConfigured } from './lib/supabaseClient';
+
+
+const HowItWorksStep: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
+  <div className="text-center">
+    <div className="flex items-center justify-center h-16 w-16 mx-auto bg-blue-100/80 rounded-full mb-4 border-2 border-blue-200/80">
+      {icon}
+    </div>
+    <h3 className="text-lg font-semibold text-slate-800 mb-1">{title}</h3>
+    <p className="text-slate-500">{children}</p>
+  </div>
+);
+
+
+const DocumentChecklist: React.FC = () => (
+  <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200/50 h-full">
+    <div className="flex items-center gap-3 mb-4">
+      <LightBulbIcon className="h-6 w-6 text-yellow-500" />
+      <h3 className="text-lg font-semibold text-slate-800">Document Checklist</h3>
+    </div>
+    <p className="text-sm text-slate-600 mb-4">For best results, please ensure your PDF documents are:</p>
+    <ul className="space-y-3">
+      <li className="flex items-start gap-2">
+        <CheckIcon className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
+        <span className="text-sm text-slate-600">Clear and legible scans (not photos).</span>
+      </li>
+      <li className="flex items-start gap-2">
+        <CheckIcon className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
+        <span className="text-sm text-slate-600">Upright and correctly oriented.</span>
+      </li>
+      <li className="flex items-start gap-2">
+        <CheckIcon className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
+        <span className="text-sm text-slate-600">Complete, with all pages included.</span>
+      </li>
+      <li className="flex items-start gap-2">
+        <CheckIcon className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
+        <span className="text-sm text-slate-600">Free of handwritten notes or marks over key text.</span>
+      </li>
+    </ul>
+  </div>
+);
+
+
+const MultiFileUpload: React.FC<{
+  files: File[];
+  onFileAdd: (file: File) => void;
+  onFileRemove: (index: number) => void;
+  label: string;
+  id: string;
+}> = ({ files, onFileAdd, onFileRemove, label, id }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type === "application/pdf") {
+      onFileAdd(file);
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+  const handleDragOver = (event: React.DragEvent<HTMLLabelElement>) => event.preventDefault();
+  const handleDrop = (event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    const file = event.dataTransfer.files?.[0];
+    if (file && file.type === "application/pdf") {
+      onFileAdd(file);
+    }
+  };
+  return (
+    <div>
+      <label className="block text-sm font-medium text-slate-700 mb-2">{label}</label>
+      <div className="space-y-2 mb-3">
+        {files.map((file, index) => (
+          <div key={`${file.name}-${index}`} className="flex items-center justify-between p-2 pl-3 bg-slate-100 border border-slate-300 rounded-lg animate-fade-in">
+            <div className="flex items-center gap-2 overflow-hidden">
+              <FileIcon className="h-5 w-5 text-blue-600 flex-shrink-0" />
+              <span className="text-sm text-slate-800 truncate" title={file.name}>{file.name}</span>
+            </div>
+            <button onClick={() => onFileRemove(index)} className="p-1 text-slate-500 hover:text-red-600 rounded-full focus:outline-none focus:ring-2 focus:ring-red-400">
+              <TrashIcon className="h-5 w-5" />
+            </button>
+          </div>
+        ))}
+      </div>
+      <label
+        htmlFor={id}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        className="flex flex-col items-center justify-center w-full h-24 px-4 transition bg-white border-2 border-slate-300 border-dashed rounded-lg cursor-pointer hover:border-blue-500 hover:bg-slate-50"
+      >
+        <div className="flex flex-col items-center justify-center text-center">
+          <UploadIcon className="w-8 h-8 mb-2 text-slate-500" />
+          <p className="text-sm text-slate-500">
+            <span className="font-semibold">Click to add</span> or drag and drop
+          </p>
+          <p className="text-xs text-slate-400">PDF only</p>
+        </div>
+        <input
+          id={id}
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+      </label>
+    </div>
+  );
+};
+
+
+const App: React.FC = () => {
+  const geminiConfigured = isGeminiConfigured();
+  const supabaseConfigured = isSupabaseConfigured();
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFiles>({
+    sampleDeed: null,
+    sellerAadhaars: [],
+    buyerAadhaars: [],
+    sellerDeed: null,
+  });
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [generatedDeed, setGeneratedDeed] = useState<string>('');
+  const { user, trials, logout, useTrial, loading: authLoading, fatalError, clearSiteDataAndReload } = useContext(UserContext);
+
+
+  const handleFileChange = useCallback((key: FileKey, file: File | null) => {
+    setUploadedFiles((prevFiles) => ({
+      ...prevFiles,
+      [key]: file,
+    }));
+  }, []);
+  const handleAddSellerAadhaar = (file: File) => setUploadedFiles(prev => ({ ...prev, sellerAadhaars: [...prev.sellerAadhaars, file] }));
+  const handleRemoveSellerAadhaar = (index: number) => setUploadedFiles(prev => ({ ...prev, sellerAadhaars: prev.sellerAadhaars.filter((_, i) => i !== index) }));
+  const handleAddBuyerAadhaar = (file: File) => setUploadedFiles(prev => ({ ...prev, buyerAadhaars: [...prev.buyerAadhaars, file] }));
+  const handleRemoveBuyerAadhaar = (index: number) => setUploadedFiles(prev => ({ ...prev, buyerAadhaars: prev.buyerAadhaars.filter((_, i) => i !== index) }));
+  const allFilesUploaded = uploadedFiles.sampleDeed !== null && uploadedFiles.sellerDeed !== null && uploadedFiles.sellerAadhaars.length > 0 && uploadedFiles.buyerAadhaars.length > 0;
+  const hasTrials = user?.isAdmin || (trials !== null && trials > 0);
+
+
+  const handleSubmit = async () => {
+    if (!allFilesUploaded) {
+      setError('Please upload all required documents, including at least one seller and one buyer Aadhaar.');
+      return;
+    }
+    if (!hasTrials) {
+      setError('You have no free trials remaining.');
+      return;
+    }
+    setError(null);
+    setIsLoading(true);
+    setGeneratedDeed('');
+    try {
+      if (!user?.isAdmin) {
+        await useTrial();
+      }
+      const deed = await generateSaleDeed(uploadedFiles);
+      setGeneratedDeed(deed);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(`An error occurred: ${err.message}`);
+      } else {
+        setError('An unknown error occurred while generating the deed.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
+  if (!geminiConfigured || !supabaseConfigured) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center font-sans p-4">
+        <div className="bg-white p-8 sm:p-12 rounded-2xl shadow-lg border border-red-200/80 max-w-2xl w-full mx-4 text-center">
+          <h1 className="text-3xl font-bold text-red-600 mb-4">Configuration Required</h1>
+          <p className="text-slate-700 mb-8 text-lg">
+            This application is not configured correctly. Please provide your API keys to continue.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+
+  if (authLoading) return <Loader message="Initializing..." />;
+
+
+  if (fatalError) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 font-sans">
+        <div className="bg-white p-8 rounded-2xl shadow-lg border border-red-200/80 text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">An error occurred</h1>
+          <p className="text-slate-700 mb-4">{fatalError}</p>
+          <button
+            onClick={clearSiteDataAndReload}
+            className="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          >
+            Clear Site Data & Reload
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+
+  if (!user) return <Auth />;
+
+
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col">
+      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200/80">
+        <div className="w-full max-w-screen-2xl mx-auto px-4 py-3 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <DocumentIcon className="h-7 w-7 text-blue-600" />
+            <span className="text-lg font-semibold text-slate-800 hidden sm:inline">Sale Deed Assistant</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-sm">
+              <span className="font-semibold text-slate-800 hidden md:inline">{user.email}</span>
+              <span className="mx-2 text-slate-300 hidden md:inline">|</span>
+              <span className="text-slate-600">
+                Trials: {user.isAdmin ? <span className="font-bold text-blue-600">Unlimited</span> : <span className="font-bold">{trials}</span>}
+              </span>
+            </div>
+            <button onClick={logout} className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-md px-3 py-1.5">
+              <LogoutIcon className="h-4 w-4" />
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+
+      <section className="w-full max-w-screen-2xl mx-auto px-4 sm:px-8 pt-12 pb-4">
+        <h1 className="text-5xl sm:text-6xl font-extrabold mb-4 text-center">
+          Draft Your Sale Deeds, <span className="text-blue-600">Instantly.</span>
+        </h1>
+        <p className="text-xl text-slate-600 mb-8 max-w-2xl mx-auto text-center">
+          The definitive platform for document writers and individuals in Tamil Nadu. Convert your existing documents into perfectly formatted, ready-to-register drafts in minutes, not hours.
+        </p>
+        <button className="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-blue-700 transition-all mb-10 block mx-auto">
+          Start Your First Draft
+        </button>
+        <div className="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 mb-16">
+          <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200/50 text-left">
+            <h3 className="font-bold text-lg mb-2">Unmatched Accuracy</h3>
+            <p className="text-slate-600 text-sm">
+              Our system meticulously extracts information, drastically reducing the risk of manual errors and typos.
+            </p>
+          </div>
+          <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200/50 text-left">
+            <h3 className="font-bold text-lg mb-2">Blazing-Fast Turnaround</h3>
+            <p className="text-slate-600 text-sm">
+              Generate a complete first draft in a fraction of the time it takes to type one from scratch.
+            </p>
+          </div>
+          <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200/50 text-left">
+            <h3 className="font-bold text-lg mb-2">Secure & Confidential</h3>
+            <p className="text-slate-600 text-sm">
+              We prioritize your data's security. All documents are handled with bank-level encryption and privacy.
+            </p>
+          </div>
+          <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200/50 text-left">
+            <h3 className="font-bold text-lg mb-2">Cost-Effective Solution</h3>
+            <p className="text-slate-600 text-sm">
+              Save valuable time and resources, allowing you to focus on your clients and core drafting work.
+            </p>
+          </div>
+        </div>
+      </section>
+
+
+      <section className="w-full max-w-screen-2xl mx-auto px-4 mb-16">
+        <h2 className="text-xl sm:text-2xl font-semibold text-slate-800 text-center mb-8">
+          Get Started in 3 Simple Steps
+        </h2>
+        <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+          <div className="text-center">
+            <div className="mx-auto mb-4 w-14 h-14 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 shadow">
+              <UploadIcon className="w-7 h-7" />
+            </div>
+            <div className="font-semibold mb-2">1. Upload Documents</div>
+            <div className="text-slate-600 text-sm">Provide the required source PDFs.</div>
+          </div>
+          <div className="text-center">
+            <div className="mx-auto mb-4 w-14 h-14 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 shadow">
+              <SparklesIcon className="w-7 h-7" />
+            </div>
+            <div className="font-semibold mb-2">2. Automated Processing</div>
+            <div className="text-slate-600 text-sm">Our system extracts & maps the data.</div>
+          </div>
+          <div className="text-center">
+            <div className="mx-auto mb-4 w-14 h-14 flex items-center justify-center rounded-full bg-blue-100 text-blue-600 shadow">
+              <CheckIcon className="w-7 h-7" />
+            </div>
+            <div className="font-semibold mb-2">3. Review & Download</div>
+            <div className="text-slate-600 text-sm">Edit, copy, or download your draft.</div>
+          </div>
+        </div>
+      </section>
+
+
+      <main className="w-full flex justify-center flex-grow px-4 sm:px-8 py-8">
+        <div className="w-full max-w-6xl mx-auto">
+          <div className="bg-white p-8 rounded-2xl shadow-md border border-slate-200/50 mb-12">
+            <h2 className="text-2xl font-semibold text-slate-800 mb-6 text-center">How It Works in 3 Simple Steps</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <HowItWorksStep icon={<UploadIcon className="h-8 w-8 text-blue-600" />} title="1. Upload Documents">
+                Provide the sample deed, seller & buyer Aadhaar, and the seller's prior deed.
+              </HowItWorksStep>
+              <HowItWorksStep icon={<SparklesIcon className="h-8 w-8 text-blue-600" />} title="2. System Generates Draft">
+                Our system analyzes the documents, extracts key data, and drafts the new sale deed.
+              </HowItWorksStep>
+              <HowItWorksStep icon={<CheckIcon className="h-8 w-8 text-blue-600" />} title="3. Review & Download">
+                Edit the generated text if needed, then copy or download your finalized document.
+              </HowItWorksStep>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <div className="lg:col-span-3 bg-white p-8 rounded-2xl shadow-lg border border-slate-200/80">
+              <div className="mb-8">
+                <h2 className="text-2xl font-semibold text-slate-800 mb-2">Start Generating Your Deed</h2>
+                <p className="text-slate-500 mb-6">Please provide all required PDF documents to proceed.</p>
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FileUpload
+                      id="sampleDeed"
+                      label="Sample Sale Deed"
+                      onFileChange={(file) => handleFileChange('sampleDeed', file)}
+                    />
+                    <FileUpload
+                      id="sellerDeed"
+                      label="Seller's Previous Sale Deed"
+                      onFileChange={(file) => handleFileChange('sellerDeed', file)}
+                    />
+                  </div>
+                  <MultiFileUpload
+                    id="sellerAadhaars"
+                    label="Seller's Aadhaar Card(s)"
+                    files={uploadedFiles.sellerAadhaars}
+                    onFileAdd={handleAddSellerAadhaar}
+                    onFileRemove={handleRemoveSellerAadhaar}
+                  />
+                  <MultiFileUpload
+                    id="buyerAadhaars"
+                    label="Buyer's Aadhaar Card(s)"
+                    files={uploadedFiles.buyerAadhaars}
+                    onFileAdd={handleAddBuyerAadhaar}
+                    onFileRemove={handleRemoveBuyerAadhaar}
+                  />
+                </div>
+              </div>
+              <div className="text-center my-8">
+                <button
+                  onClick={handleSubmit}
+                  disabled={!allFilesUploaded || isLoading || !hasTrials}
+                  className="bg-blue-600 text-white font-bold py-3 px-10 rounded-lg shadow-md hover:bg-blue-700 transition-all duration-300 disabled:bg-slate-400 disabled:cursor-not-allowed disabled:shadow-none focus:outline-none focus:ring-4 focus:ring-blue-300"
+                >
+                  {isLoading ? 'Generating...' : 'Draft Sale Deed'}
+                </button>
+                {!isLoading && !hasTrials && (
+                  <p className="text-red-600 text-sm mt-4">You have run out of free trials.</p>
+                )}
+              </div>
+              {error && (
+                <div className="mt-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center" role="alert">
+                  <p>{error}</p>
+                </div>
+              )}
+            </div>
+            <div className="lg:col-span-2">
+              <DocumentChecklist />
+            </div>
+          </div>
+          {isLoading && <Loader />}
+          {generatedDeed && !isLoading && (
+            <div className="mt-12 max-w-6xl mx-auto">
+              <h2 className="text-2xl font-semibold text-slate-800 mb-4 text-center">Your Generated Sale Deed Draft</h2>
+              <ResultDisplay text={generatedDeed} onTextChange={setGeneratedDeed} />
+            </div>
+          )}
+        </div>
+      </main>
+      <footer className="w-full py-6 mt-12 border-t border-slate-200/80 bg-white/50">
+        <div className="w-full max-w-screen-2xl mx-auto px-4 text-center text-sm text-slate-500">
+          &copy; {new Date().getFullYear()} Vitalize Ventures. All rights reserved.
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+
+export default App;
