@@ -6,14 +6,22 @@ import { isGeminiConfigured } from './services/geminiService';
 import { isSupabaseConfigured } from './lib/supabaseClient';
 
 import Landing from './components/Landing';
-import Dashboard from './components/Dashboard';        // ⬅️ now from components/
-import MODGenerator from './components/MODGenerator';   // ⬅️
-import SaleAgreement from './components/SaleAgreement'; // ⬅️
+import Dashboard from './components/Dashboard';
+import MODGenerator from './components/MODGenerator';
+import SaleAgreement from './components/SaleAgreement';
+import AuthCallback from './components/AuthCallback'; // 👈 add this file (see earlier)
 
 type AppView = 'dashboard' | 'mod' | 'sale-agreement';
 
 const App: React.FC = () => {
   const { user, loading: authLoading, fatalError, clearSiteDataAndReload } = useContext(UserContext);
+
+  // --- Handle the one real pathname used by Supabase magic-links ---
+  // When users click the email link, Supabase redirects to /auth/callback?code=...
+  // This page must exchange the code for a session BEFORE your hash-router runs.
+  if (typeof window !== 'undefined' && window.location.pathname === '/auth/callback') {
+    return <AuthCallback />;
+  }
 
   const geminiConfigured = isGeminiConfigured();
   const supabaseConfigured = isSupabaseConfigured();
@@ -73,6 +81,14 @@ const App: React.FC = () => {
         </div>
       </div>
     );
+  }
+
+  // 3.5) Password recovery flow:
+  // After Supabase page, we redirect to /auth/callback#type=recovery,
+  // and AuthCallback then sends the user back to '/#type=recovery'.
+  // Your Landing.tsx watches this hash and opens the Update Password modal.
+  if (typeof window !== 'undefined' && window.location.hash.includes('type=recovery')) {
+    return <Landing />;
   }
 
   // 4) Landing vs. App

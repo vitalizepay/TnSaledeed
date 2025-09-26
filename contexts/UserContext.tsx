@@ -254,9 +254,17 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signup = async (email: string, pass: string) => {
-    const { error } = await supabase.auth.signUp({ email, password: pass });
-    return { error };
+  const site = typeof window !== 'undefined' ? window.location.origin : 'https://tnsaledeed.com';
+  const { error } = await supabase.auth.signUp({
+    email,
+    password: pass,
+    options: {
+      emailRedirectTo: `${site}/auth/callback`, // ✅ important
+    },
+  });
+  return { error };
   };
+
 
   const logout = async () => {
     await stopHeartbeat();
@@ -280,11 +288,13 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const sendPasswordResetEmail = async (email: string) => {
+    const site = typeof window !== 'undefined' ? window.location.origin : 'https://tnsaledeed.com';
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}#type=recovery`,
+      redirectTo: `${site}/auth/callback#type=recovery`, // ✅
     });
     return { error };
   };
+
 
   const updatePassword = async (password: string) => {
     const { error } = await supabase.auth.updateUser({ password });
