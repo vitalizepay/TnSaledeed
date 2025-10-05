@@ -319,8 +319,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onOpenMOD, onOpenSaleAgreement })
 
       const deed = await generateSaleDeed(filesForService);
       setGeneratedDeed(deed);
-    } catch (err: any) {
-      setError(err?.message || 'Unknown error occurred.');
+    } catch (err: any)      {setError(err?.message || 'Unknown error occurred.');
     } finally {
       setIsLoading(false);
     }
@@ -423,7 +422,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onOpenMOD, onOpenSaleAgreement })
       )}
 
       {/* Body */}
-      <main className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
+      <main className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow flex flex-col">
         {/* How it works */}
         <div className="rounded-2xl bg-gradient-to-r from-white/90 to-indigo-50/90 ring-1 ring-slate-200 shadow-md p-6 mb-8">
           <h2 className="text-xl font-semibold text-center text-slate-800 mb-6">
@@ -442,216 +441,222 @@ const Dashboard: React.FC<DashboardProps> = ({ onOpenMOD, onOpenSaleAgreement })
           </div>
         </div>
 
-        {/* Uploader + checklist */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left panel */}
-          <div className="rounded-2xl bg-gradient-to-br from-indigo-50/80 via-white/80 to-violet-50/70 ring-1 ring-slate-200 shadow-lg p-6 lg:col-span-2">
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">Start Generating Your Deed</h3>
-            <p className="text-sm text-slate-600 mb-6">Please provide all required data to proceed.</p>
+        {/* NEW: Two-column container */}
+        <div className="flex-grow flex flex-col lg:flex-row gap-8">
+          
+          {/* --- LEFT COLUMN (Forms) --- */}
+          <div className="lg:w-3/5 flex flex-col gap-8">
+            {/* Uploader panel */}
+            <div className="rounded-2xl bg-gradient-to-br from-indigo-50/80 via-white/80 to-violet-50/70 ring-1 ring-slate-200 shadow-lg p-6">
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">Start Generating Your Deed</h3>
+              <p className="text-sm text-slate-600 mb-6">Please provide all required data to proceed.</p>
 
-            <div className="space-y-6">
-              {/* Required PDFs */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FileUpload
-                  id="sampleDeed"
-                  label="Sample Sale Deed (PDF) — Required"
-                  onFileChange={(file) => handleFileChange('sampleDeed', file)}
+              <div className="space-y-6">
+                {/* Required PDFs */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FileUpload
+                    id="sampleDeed"
+                    label="Sample Sale Deed (PDF) — Required"
+                    onFileChange={(file) => handleFileChange('sampleDeed', file)}
+                  />
+                  <FileUpload
+                    id="sellerDeed"
+                    label="Seller's Previous Sale Deed (PDF) — Required"
+                    onFileChange={(file) => handleFileChange('sellerDeed', file)}
+                  />
+                </div>
+
+                {/* Aadhaar PDFs (optional) */}
+                <MultiFileUpload
+                  id="sellerAadhaars"
+                  label="Seller's Aadhaar PDF(s) — Optional"
+                  files={uploadedFiles.sellerAadhaars}
+                  onFileAdd={handleAddSellerAadhaar}
+                  onFileRemove={handleRemoveSellerAadhaar}
                 />
-                <FileUpload
-                  id="sellerDeed"
-                  label="Seller's Previous Sale Deed (PDF) — Required"
-                  onFileChange={(file) => handleFileChange('sellerDeed', file)}
+                <MultiFileUpload
+                  id="buyerAadhaars"
+                  label="Buyer's Aadhaar PDF(s) — Optional"
+                  files={uploadedFiles.buyerAadhaars}
+                  onFileAdd={handleAddBuyerAadhaar}
+                  onFileRemove={handleRemoveBuyerAadhaar}
                 />
-              </div>
 
-              {/* Aadhaar PDFs (optional) */}
-              <MultiFileUpload
-                id="sellerAadhaars"
-                label="Seller's Aadhaar PDF(s) — Optional"
-                files={uploadedFiles.sellerAadhaars}
-                onFileAdd={handleAddSellerAadhaar}
-                onFileRemove={handleRemoveSellerAadhaar}
-              />
-              <MultiFileUpload
-                id="buyerAadhaars"
-                label="Buyer's Aadhaar PDF(s) — Optional"
-                files={uploadedFiles.buyerAadhaars}
-                onFileAdd={handleAddBuyerAadhaar}
-                onFileRemove={handleRemoveBuyerAadhaar}
-              />
-
-              {/* Manual Sellers (optional) */}
-              <div className="border rounded-lg p-4 bg-white/70">
-                <div className="flex items-center justify-between">
-                  <div className="font-medium text-slate-900 mb-3">
-                    Add Seller Aadhaar (Manual) — Optional
-                  </div>
-                  <button
-                    type="button"
-                    onClick={addSellerRow}
-                    className="text-sm px-3 py-1.5 rounded-md border border-slate-300 bg-white hover:bg-slate-50"
-                  >
-                    + Add another seller
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  {sellerRows.map((row, i) => (
-                    <div
-                      key={`seller-${i}`}
-                      className="grid grid-cols-1 md:grid-cols-2 gap-3 border rounded-md p-3 bg-white/60"
-                    >
-                      <input
-                        type="text"
-                        placeholder="Name"
-                        className="w-full border rounded-md px-3 py-2"
-                        value={row.name}
-                        onChange={(e) => updateSellerRow(i, 'name', e.target.value)}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Aadhaar Number"
-                        className="w-full border rounded-md px-3 py-2"
-                        value={row.aadhaarNumber}
-                        onChange={(e) => updateSellerRow(i, 'aadhaarNumber', e.target.value)}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Date of Birth (optional)"
-                        className="w-full border rounded-md px-3 py-2"
-                        value={row.dob}
-                        onChange={(e) => updateSellerRow(i, 'dob', e.target.value)}
-                      />
-                      <textarea
-                        placeholder="Address (optional)"
-                        className="w-full border rounded-md px-3 py-2 md:col-span-1"
-                        rows={3}
-                        value={row.address}
-                        onChange={(e) => updateSellerRow(i, 'address', e.target.value)}
-                      />
-                      {sellerRows.length > 1 && (
-                        <div className="md:col-span-2 flex justify-end">
-                          <button
-                            type="button"
-                            onClick={() => removeSellerRow(i)}
-                            className="text-red-600 text-sm hover:underline"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      )}
+                {/* Manual Sellers (optional) */}
+                <div className="border rounded-lg p-4 bg-white/70">
+                  <div className="flex items-center justify-between">
+                    <div className="font-medium text-slate-900 mb-3">
+                      Add Seller Aadhaar (Manual) — Optional
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Manual Buyers (optional) */}
-              <div className="border rounded-lg p-4 bg-white/70">
-                <div className="flex items-center justify-between">
-                  <div className="font-medium text-slate-900 mb-3">
-                    Add Buyer Aadhaar (Manual) — Optional
-                  </div>
-                  <button
-                    type="button"
-                    onClick={addBuyerRow}
-                    className="text-sm px-3 py-1.5 rounded-md border border-slate-300 bg-white hover:bg-slate-50"
-                  >
-                    + Add another buyer
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  {buyerRows.map((row, i) => (
-                    <div
-                      key={`buyer-${i}`}
-                      className="grid grid-cols-1 md:grid-cols-2 gap-3 border rounded-md p-3 bg-white/60"
+                    <button
+                      type="button"
+                      onClick={addSellerRow}
+                      className="text-sm px-3 py-1.5 rounded-md border border-slate-300 bg-white hover:bg-slate-50"
                     >
-                      <input
-                        type="text"
-                        placeholder="Name"
-                        className="w-full border rounded-md px-3 py-2"
-                        value={row.name}
-                        onChange={(e) => updateBuyerRow(i, 'name', e.target.value)}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Aadhaar Number"
-                        className="w-full border rounded-md px-3 py-2"
-                        value={row.aadhaarNumber}
-                        onChange={(e) => updateBuyerRow(i, 'aadhaarNumber', e.target.value)}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Date of Birth (optional)"
-                        className="w-full border rounded-md px-3 py-2"
-                        value={row.dob}
-                        onChange={(e) => updateBuyerRow(i, 'dob', e.target.value)}
-                      />
-                      <textarea
-                        placeholder="Address (optional)"
-                        className="w-full border rounded-md px-3 py-2 md:col-span-1"
-                        rows={3}
-                        value={row.address}
-                        onChange={(e) => updateBuyerRow(i, 'address', e.target.value)}
-                      />
-                      {buyerRows.length > 1 && (
-                        <div className="md:col-span-2 flex justify-end">
-                          <button
-                            type="button"
-                            onClick={() => removeBuyerRow(i)}
-                            className="text-red-600 text-sm hover:underline"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      )}
+                      + Add another seller
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {sellerRows.map((row, i) => (
+                      <div
+                        key={`seller-${i}`}
+                        className="grid grid-cols-1 md:grid-cols-2 gap-3 border rounded-md p-3 bg-white/60"
+                      >
+                        <input
+                          type="text"
+                          placeholder="Name"
+                          className="w-full border rounded-md px-3 py-2"
+                          value={row.name}
+                          onChange={(e) => updateSellerRow(i, 'name', e.target.value)}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Aadhaar Number"
+                          className="w-full border rounded-md px-3 py-2"
+                          value={row.aadhaarNumber}
+                          onChange={(e) => updateSellerRow(i, 'aadhaarNumber', e.target.value)}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Date of Birth (optional)"
+                          className="w-full border rounded-md px-3 py-2"
+                          value={row.dob}
+                          onChange={(e) => updateSellerRow(i, 'dob', e.target.value)}
+                        />
+                        <textarea
+                          placeholder="Address (optional)"
+                          className="w-full border rounded-md px-3 py-2 md:col-span-1"
+                          rows={3}
+                          value={row.address}
+                          onChange={(e) => updateSellerRow(i, 'address', e.target.value)}
+                        />
+                        {sellerRows.length > 1 && (
+                          <div className="md:col-span-2 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => removeSellerRow(i)}
+                              className="text-red-600 text-sm hover:underline"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Manual Buyers (optional) */}
+                <div className="border rounded-lg p-4 bg-white/70">
+                  <div className="flex items-center justify-between">
+                    <div className="font-medium text-slate-900 mb-3">
+                      Add Buyer Aadhaar (Manual) — Optional
                     </div>
-                  ))}
+                    <button
+                      type="button"
+                      onClick={addBuyerRow}
+                      className="text-sm px-3 py-1.5 rounded-md border border-slate-300 bg-white hover:bg-slate-50"
+                    >
+                      + Add another buyer
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    {buyerRows.map((row, i) => (
+                      <div
+                        key={`buyer-${i}`}
+                        className="grid grid-cols-1 md:grid-cols-2 gap-3 border rounded-md p-3 bg-white/60"
+                      >
+                        <input
+                          type="text"
+                          placeholder="Name"
+                          className="w-full border rounded-md px-3 py-2"
+                          value={row.name}
+                          onChange={(e) => updateBuyerRow(i, 'name', e.target.value)}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Aadhaar Number"
+                          className="w-full border rounded-md px-3 py-2"
+                          value={row.aadhaarNumber}
+                          onChange={(e) => updateBuyerRow(i, 'aadhaarNumber', e.target.value)}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Date of Birth (optional)"
+                          className="w-full border rounded-md px-3 py-2"
+                          value={row.dob}
+                          onChange={(e) => updateBuyerRow(i, 'dob', e.target.value)}
+                        />
+                        <textarea
+                          placeholder="Address (optional)"
+                          className="w-full border rounded-md px-3 py-2 md:col-span-1"
+                          rows={3}
+                          value={row.address}
+                          onChange={(e) => updateBuyerRow(i, 'address', e.target.value)}
+                        />
+                        {buyerRows.length > 1 && (
+                          <div className="md:col-span-2 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => removeBuyerRow(i)}
+                              className="text-red-600 text-sm hover:underline"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Primary action */}
-            <div className="text-center mt-8">
-              <button
-                onClick={handleSubmit}
-                disabled={isLoading || !hasTrials || !readyToGenerate}
-                className={
-                  readyToGenerate && hasTrials && !isLoading
-                    ? 'inline-flex items-center justify-center gap-2 h-11 px-7 rounded-xl font-semibold shadow-[0_10px_25px_-8px_rgba(79,70,229,0.55)] hover:shadow-[0_16px_30px_-8px_rgba(79,70,229,0.65)] hover:scale-[1.02] active:scale-95 ring-1 ring-indigo-400/40 transition-all bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 text-white'
-                    : 'inline-flex items-center justify-center gap-2 h-11 px-7 rounded-xl font-semibold bg-blue-200 text-slate-700 cursor-not-allowed'
-                }
-              >
-                {isLoading ? 'Generating...' : 'Draft Sale Deed'}
-              </button>
-              {!isLoading && !hasTrials && (
-                <p className="text-red-600 text-sm mt-3">You have run out of free trials.</p>
+              {/* Primary action */}
+              <div className="text-center mt-8">
+                <button
+                  onClick={handleSubmit}
+                  disabled={isLoading || !hasTrials || !readyToGenerate}
+                  className={
+                    readyToGenerate && hasTrials && !isLoading
+                      ? 'inline-flex items-center justify-center gap-2 h-11 px-7 rounded-xl font-semibold shadow-[0_10px_25px_-8px_rgba(79,70,229,0.55)] hover:shadow-[0_16px_30px_-8px_rgba(79,70,229,0.65)] hover:scale-[1.02] active:scale-95 ring-1 ring-indigo-400/40 transition-all bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 text-white'
+                      : 'inline-flex items-center justify-center gap-2 h-11 px-7 rounded-xl font-semibold bg-blue-200 text-slate-700 cursor-not-allowed'
+                  }
+                >
+                  {isLoading ? 'Generating...' : 'Draft Sale Deed'}
+                </button>
+                {!isLoading && !hasTrials && (
+                  <p className="text-red-600 text-sm mt-3">You have run out of free trials.</p>
+                )}
+              </div>
+
+              {error && (
+                <div className="mt-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center">
+                  {error}
+                </div>
               )}
             </div>
+            {/* Checklist panel */}
+            <div className="lg:col-span-1">
+              <DocumentChecklist />
+            </div>
+          </div>
 
-            {error && (
-              <div className="mt-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center">
-                {error}
+          {/* --- RIGHT COLUMN (Output) --- */}
+          <div className="lg:w-2/5 flex flex-col">
+            {/* Results section */}
+            {isLoading && <Loader />}
+            {(generatedDeed || isLoading) && !error && (
+              <div className="flex flex-col flex-grow h-full">
+                <h2 className="text-xl font-semibold text-slate-800 mb-3 text-center">
+                  Your Generated Sale Deed Draft
+                </h2>
+                <ResultDisplay text={generatedDeed} onTextChange={setGeneratedDeed} />
               </div>
             )}
           </div>
-
-          {/* Right rail */}
-          <div className="lg:col-span-1">
-            <DocumentChecklist />
-          </div>
         </div>
-
-        {/* Results */}
-        {isLoading && <Loader />}
-        {generatedDeed && !isLoading && (
-          <div className="mt-10">
-            <h2 className="text-xl font-semibold text-slate-800 mb-3 text-center">
-              Your Generated Sale Deed Draft
-            </h2>
-            <ResultDisplay text={generatedDeed} onTextChange={setGeneratedDeed} />
-          </div>
-        )}
       </main>
 
       {/* Footer */}
