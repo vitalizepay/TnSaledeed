@@ -375,7 +375,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onOpenMOD, onOpenSaleAgreement })
             <a href="./sample-sale-deed.pdf" download className={headerBtnNeutral}>
               Sample Deed
             </a>
-            <a href="./latha.ttf" download className={headerBtnNeutral}>
+            <a href="./MCLNeelu.TTF" download className={headerBtnNeutral}>
               Tamil Font
             </a>
             <a href="./saledeed-website-usermanual.pdf" download className={headerBtnNeutral}>
