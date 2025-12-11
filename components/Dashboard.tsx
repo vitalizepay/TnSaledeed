@@ -340,65 +340,65 @@ const Dashboard: React.FC<DashboardProps> = ({ onOpenMOD, onOpenSaleAgreement })
     // Use fixed inset-0 overflow-y-auto flex flex-col to match Landing.tsx layout
     <div className="fixed inset-0 overflow-y-auto bg-gradient-to-b from-indigo-100 via-indigo-50 to-slate-100 font-sans flex flex-col">
       {/* Header */}
-      <header className="bg-gradient-to-r from-indigo-50 to-violet-50 border-b border-slate-200/70 sticky top-0 z-40 w-full">
-        <div className="w-full max-w-screen-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3 shrink-0">
-            <DocumentIcon className="h-6 w-6 text-indigo-600" />
-            <span className="text-base font-semibold text-slate-900 whitespace-nowrap">
-              Sale Deed Assistant
-            </span>
-          </div>
+<header className="bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 text-white border-b border-indigo-700 sticky top-0 z-40 w-full shadow-lg">
+  <div className="w-full max-w-screen-2xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div className="flex items-center gap-3 shrink-0">
+      <DocumentIcon className="h-6 w-6 text-white drop-shadow-sm" />
+      <span className="text-base font-semibold whitespace-nowrap drop-shadow-sm">
+        Sale Deed Assistant
+      </span>
+    </div>
 
-          {/* One-line controls */}
-          <div className="flex items-center gap-2 sm:gap-3 text-sm flex-nowrap overflow-x-auto scrollbar-none">
-            {user?.email && (
-              <>
-                <span className="font-semibold whitespace-nowrap">{user.email}</span>
-                <span className="text-slate-300">|</span>
-              </>
-            )}
+    {/* One-line controls */}
+    <div className="flex items-center gap-2 sm:gap-3 text-sm flex-nowrap overflow-x-auto scrollbar-none">
+      {user?.email && (
+        <>
+          <span className="font-semibold whitespace-nowrap">{user.email}</span>
+          <span className="text-indigo-300">|</span>
+        </>
+      )}
 
-            <span className="whitespace-nowrap">
-              Trials:{' '}
-              {user?.isAdmin ? (
-                <span className="font-bold text-blue-600">Unlimited</span>
-              ) : (
-                <span className="font-bold">{trials}</span>
-              )}
-            </span>
+      <span className="whitespace-nowrap">
+        Trials:{' '}
+        {user?.isAdmin ? (
+          <span className="font-bold text-yellow-200">Unlimited</span>
+        ) : (
+          <span className="font-bold">{trials}</span>
+        )}
+      </span>
 
-            <span className="text-slate-300">|</span>
-            <span className="hidden sm:inline text-slate-600 whitespace-nowrap">
-              Active sessions: <span className="font-semibold">{activeSessions}</span>
-            </span>
+      <span className="text-indigo-300">|</span>
+      <span className="hidden sm:inline whitespace-nowrap">
+        Active sessions: <span className="font-semibold">{activeSessions}</span>
+      </span>
 
-            <a href="./sample-sale-deed.pdf" download className={headerBtnNeutral}>
-              Sample Deed
-            </a>
-            <a href="./MCLNeelu.TTF" download className={headerBtnNeutral}>
-              Tamil Font
-            </a>
-            <a href="./saledeed-website-usermanual.pdf" download className={headerBtnNeutral}>
-              User Manual
-            </a>
+      <a href="./sample-sale-deed.pdf" download className="inline-flex items-center justify-center h-9 px-3 rounded-xl font-medium bg-white/20 hover:bg-white/30 text-white border border-white/30 transition whitespace-nowrap">
+        Sample Deed
+      </a>
+      <a href="./MCLNeelu.TTF" download className="inline-flex items-center justify-center h-9 px-3 rounded-xl font-medium bg-white/20 hover:bg-white/30 text-white border border-white/30 transition whitespace-nowrap">
+        Tamil Font
+      </a>
+      <a href="./saledeed-website-usermanual.pdf" download className="inline-flex items-center justify-center h-9 px-3 rounded-xl font-medium bg-white/20 hover:bg-white/30 text-white border border-white/30 transition whitespace-nowrap">
+        User Manual
+      </a>
 
-            <button onClick={onOpenSaleAgreement} className={headerBtnBlue}>
-              Open Sale Agreement
-            </button>
-            <button onClick={onOpenMOD} className={headerBtnBlue}>
-              Open MOD Generator
-            </button>
+      <button onClick={onOpenSaleAgreement} className="inline-flex items-center justify-center h-9 px-3 rounded-xl font-medium bg-emerald-500 hover:bg-emerald-400 text-white transition whitespace-nowrap shadow-md">
+        Open Sale Agreement
+      </button>
+      <button onClick={onOpenMOD} className="inline-flex items-center justify-center h-9 px-3 rounded-xl font-medium bg-rose-500 hover:bg-rose-400 text-white transition whitespace-nowrap shadow-md">
+        Open MOD Generator
+      </button>
 
-            <button
-              onClick={logout}
-              className="flex items-center gap-2 font-medium text-slate-700 hover:text-indigo-600 rounded-md px-3 py-1.5 whitespace-nowrap"
-            >
-              <LogoutIcon className="h-4 w-4" />
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
+      <button
+        onClick={logout}
+        className="flex items-center gap-2 font-medium text-white hover:text-yellow-200 transition rounded-md px-3 py-1.5 whitespace-nowrap"
+      >
+        <LogoutIcon className="h-4 w-4" />
+        Logout
+      </button>
+    </div>
+  </div>
+</header>
 
       {/* Admin presence list */}
       {user?.isAdmin && (

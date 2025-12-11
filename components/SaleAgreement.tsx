@@ -282,50 +282,56 @@ const SaleAgreement: React.FC<SaleAgreementProps> = ({ onOpenSaleDeed, onOpenMOD
 
   return (
     <div className="fixed inset-0 overflow-y-auto bg-gradient-to-b from-indigo-100 via-indigo-50 to-slate-100 font-sans flex flex-col">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-indigo-50 to-violet-50 border-b border-slate-200/70 sticky top-0 z-40 w-full">
-        <div className="w-full max-w-screen-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3 shrink-0">
-            <DocumentIcon className="h-6 w-6 text-indigo-600" />
-            <span className="text-base font-semibold text-slate-900 whitespace-nowrap">
-              Sale Agreement Assistant
-            </span>
-          </div>
-          <div className="flex items-center gap-2 sm:gap-3 text-sm flex-nowrap overflow-x-auto scrollbar-none">
-            <button
-              onClick={onOpenSaleDeed}
-              className={headerBtnBlue}
-              title="Go to Sale Deed"
-            >
-              Sale Deed
-            </button>
-            <button
-              onClick={onOpenMOD}
-              className={headerBtnBlue}
-              title="Open MOD Generator"
-            >
-              MOD Generator
-            </button>
-            <span className="hidden md:inline text-slate-300">|</span>
-            <span className="hidden sm:inline text-slate-600 whitespace-nowrap">
-              Trials:{' '}
-              {user?.isAdmin ? (
-                <span className="font-bold text-blue-600">Unlimited</span>
-              ) : (
-                <span className="font-bold">{trials}</span>
-              )}
-            </span>
-            <span className="hidden md:inline text-slate-300">|</span>
-            <button
-              onClick={logout}
-              className="flex items-center gap-2 font-medium text-slate-700 hover:text-indigo-600 rounded-md px-3 py-1.5 whitespace-nowrap"
-            >
-              <LogoutIcon className="h-4 w-4" />
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
+     {/* Header */}
+<header className="bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 text-white border-b border-indigo-700 sticky top-0 z-40 w-full shadow-lg">
+  <div className="w-full max-w-screen-2xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div className="flex items-center gap-3 shrink-0">
+      <DocumentIcon className="h-6 w-6 text-white drop-shadow-sm" />
+      <span className="text-base font-semibold whitespace-nowrap drop-shadow-sm">
+        Sale Agreement Assistant
+      </span>
+    </div>
+
+    <div className="flex items-center gap-2 sm:gap-3 text-sm flex-nowrap overflow-x-auto scrollbar-none">
+      <button
+        onClick={onOpenSaleDeed}
+        className="inline-flex items-center justify-center h-9 px-3 rounded-xl font-medium bg-emerald-500 hover:bg-emerald-400 text-white transition whitespace-nowrap shadow-md"
+        title="Go to Sale Deed"
+      >
+        Sale Deed
+      </button>
+
+      <button
+        onClick={onOpenMOD}
+        className="inline-flex items-center justify-center h-9 px-3 rounded-xl font-medium bg-rose-500 hover:bg-rose-400 text-white transition whitespace-nowrap shadow-md"
+        title="Open MOD Generator"
+      >
+        MOD Generator
+      </button>
+
+      <span className="hidden md:inline text-indigo-300">|</span>
+
+      <span className="hidden sm:inline whitespace-nowrap">
+        Trials:{' '}
+        {user?.isAdmin ? (
+          <span className="font-bold text-yellow-200">Unlimited</span>
+        ) : (
+          <span className="font-bold">{trials}</span>
+        )}
+      </span>
+
+      <span className="hidden md:inline text-indigo-300">|</span>
+
+      <button
+        onClick={logout}
+        className="flex items-center gap-2 font-medium text-white hover:text-yellow-200 transition rounded-md px-3 py-1.5 whitespace-nowrap"
+      >
+        <LogoutIcon className="h-4 w-4" />
+        Logout
+      </button>
+    </div>
+  </div>
+</header>
 
       {/* Body */}
       <main className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow flex flex-col">
